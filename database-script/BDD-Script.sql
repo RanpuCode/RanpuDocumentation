@@ -169,6 +169,25 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.direcciones
     OWNER to ranpubackenddatabase_user;
 
+-- FUNCTION: public.set_fecha_creacion()
+
+-- DROP FUNCTION IF EXISTS public.set_fecha_creacion();
+
+CREATE OR REPLACE FUNCTION public.set_fecha_creacion()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+    NEW.fecha_creacion = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.set_fecha_creacion()
+    OWNER TO ranpubackenddatabase_user;
+
 
 -- Table: public.pedidos
 
@@ -189,7 +208,7 @@ CREATE TABLE IF NOT EXISTS public.pedidos
     temporal_cart_id character varying(100) COLLATE pg_catalog."default",
     detalles_pago json,
     ingreso_neto numeric(10,2),
-    fecha_creacion timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_creacion timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pedidos_pkey PRIMARY KEY (pedido_id),
     CONSTRAINT pedidos_direccion_id_fkey FOREIGN KEY (direccion_id)
         REFERENCES public.direcciones (direccion_id) MATCH SIMPLE
@@ -201,6 +220,16 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.pedidos
     OWNER to ranpubackenddatabase_user;
+
+-- Trigger: trigger_set_fecha_creacion
+
+-- DROP TRIGGER IF EXISTS trigger_set_fecha_creacion ON public.pedidos;
+
+CREATE OR REPLACE TRIGGER trigger_set_fecha_creacion
+    BEFORE INSERT
+    ON public.pedidos
+    FOR EACH ROW
+    EXECUTE FUNCTION public.set_fecha_creacion();
 
 
 -- Table: public.pedidos_usuario
@@ -519,6 +548,30 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.impuestos
     OWNER to ranpubackenddatabase_user;
+
+
+-- FUNCTION: public.check_max_images_per_producto_pedido()
+
+-- DROP FUNCTION IF EXISTS public.check_max_images_per_producto_pedido();
+
+CREATE OR REPLACE FUNCTION public.check_max_images_per_producto_pedido()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+    IF (SELECT COUNT(*) FROM imagenes_ranpulamps 
+        WHERE producto_pedido_id = NEW.producto_pedido_id) >= 4 THEN
+        RAISE EXCEPTION 'No more than 4 images are allowed per producto_pedido_id';
+    END IF;
+    RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.check_max_images_per_producto_pedido()
+    OWNER TO ranpubackenddatabase_user;
+
 
 
 -- Table: public.imagenes_ranpulamps
