@@ -528,7 +528,7 @@ ALTER TABLE IF EXISTS public.impuestos
 CREATE TABLE IF NOT EXISTS public.imagenes_ranpulamps
 (
     imagenes_ranpulamps_id integer NOT NULL DEFAULT nextval('imagenes_ranpulamps_id_seq'::regclass),
-    imagen_url character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    imagen_url character varying(1000) COLLATE pg_catalog."default" NOT NULL,
     producto_pedido_id integer NOT NULL,
     CONSTRAINT imagenes_ranpulamps_pkey PRIMARY KEY (imagenes_ranpulamps_id),
     CONSTRAINT imagenes_ranpulamps_producto_pedido_id_fkey FOREIGN KEY (producto_pedido_id)
